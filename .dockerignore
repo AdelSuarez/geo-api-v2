@@ -35,5 +35,6 @@
 **/build
 **/dist
 node_modules
+mongo-data
 LICENSE
 README.md

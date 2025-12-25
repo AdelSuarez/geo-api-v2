@@ -23,6 +23,17 @@ services:
     #  Para que tome las variables de entorno
     env_file:
       - .env
+
+    # MongoDB
+    depends_on:
+      - mongo
+
+  mongo:
+    image: mongo:6.0
+    ports:
+      - "27017:27017"
+    volumes:
+      - ./mongo-data:/data/db
 # The commented out section below is an example of how to define a PostgreSQL
 # database that your application can use. `depends_on` tells Docker Compose to
 # start the database before your application. The `db-data` volume persists the
