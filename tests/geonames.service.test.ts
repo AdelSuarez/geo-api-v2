@@ -1,37 +1,3 @@
-// import { GeoNameService } from "../src/services/geonames.service";
-// import { GEONAMES_USER } from "../src/config/envs";
-
-// // ! verificar el codigo, porque no se entendio bien lo que hace
-// describe("Servicio GeoNames", () => {
-//   const service = new GeoNameService();
-
-//   it("Debería traer datos completos (lat, lng) de una ciudad", async () => {
-//     // 1. Preparamos una respuesta falsa (MOCK) para no usar internet
-//     const respuestaFalsa = {
-//       geonames: [{ name: "Madrid", lat: "40.4165", lng: "-3.70256" }],
-//     };
-
-//     // 2. Trucamos la función "fetch" (el navegador)
-//     global.fetch = jest.fn(() =>
-//       Promise.resolve({
-//         ok: true,
-//         json: () => Promise.resolve(respuestaFalsa),
-//       })
-//     ) as jest.Mock;
-
-//     // 3. Ejecutamos el codigo
-//     const resultado = await service.getCityDetails("Madrid");
-
-//     // 4. Verificamos el resultado tiene latitud
-//     expect(resultado).toHaveProperty("lat", "40.4165");
-
-//     // Verificamos si se uso el usuario y se pidio info COMPLETA (FULL)?
-//     const urlUsada = (global.fetch as jest.Mock).mock.calls[0][0];
-//     expect(urlUsada).toContain(`username=${GEONAMES_USER}`);
-//     expect(urlUsada).toContain("style=FULL");
-//   });
-// });
-
 import { GeoNameService } from "../src/services/geonames.service";
 import { CityModel } from "../src/models/city.model";
 
@@ -67,6 +33,18 @@ describe("Servicio GeoNames", () => {
           lng: "-3.70256",
           countryName: "Spain",
           population: 3000000,
+          bbox: {
+            east: 10,
+            south: 10,
+            north: 20,
+            west: 20,
+            accuracyLevel: 5,
+          },
+          timezone: {
+            gmtOffset: 1,
+            timeZoneId: "Europe/Madrid",
+            dstOffset: 2,
+          },
         },
       ],
     };
@@ -82,8 +60,8 @@ describe("Servicio GeoNames", () => {
 
     // --- VERIFICACIÓN (ASSERT) ---
     expect(result).toBeDefined();
-    expect(result.name).toBe("Madrid");
-    expect(result.lat).toBe("40.4165");
+    expect(result?.name).toBe("Madrid");
+    expect(result?.latitude).toBe("40.4165");
 
     // Verificamos que intentó buscar en la BD primero
     expect(CityModel.findOne).toHaveBeenCalled();

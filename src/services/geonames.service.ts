@@ -1,9 +1,10 @@
 import { GEONAMES_API_URL, GEONAMES_USER } from "../config/envs";
+import { getGeoCity } from "../interface/geocity.interface";
 import { CityModel } from "../models/city.model"; // <--- 1. NUEVO IMPORT
 
 export class GeoNameService {
   async getCityDetails(city: string) {
-    // --- 2. NUEVO: VERIFICAR SI YA EXISTE EN MONGODB (CACHE) ---
+    // Verificamos en la base de datos primero si se encuentra
     try {
       // Buscamos sin importar mayúsculas/minúsculas
       const cachedCity = await CityModel.findOne({
@@ -11,15 +12,14 @@ export class GeoNameService {
       });
 
       if (cachedCity) {
-        console.log(`⚡ Recuperado de caché (MongoDB): ${cachedCity.name}`);
-        return cachedCity; // ¡Retornamos rápido y no gastamos API!
+        console.log(`Recuperado de MongoDB: ${cachedCity.name}`);
+        return cachedCity; // retornamos si ya existe en mongo
       }
     } catch (error) {
-      console.log("Error leyendo caché, intentando con API externa...");
+      console.log("Error en DB, Usando api");
     }
-    // ------------------------------------------------------------
 
-    // --- TU CÓDIGO ORIGINAL (INTACTO) ---
+    // Consumo de api si no esta en la bd
     const params = new URLSearchParams({
       q: city,
       maxRows: "1",
@@ -44,24 +44,26 @@ export class GeoNameService {
         return null;
       }
 
+      // tomamos solo el primer valor
       const result = data.geonames[0];
 
-      // --- 3. NUEVO: GUARDAR EN MONGODB PARA LA PRÓXIMA ---
+      // Guardamos en la basde de datos de mongo
       try {
         await CityModel.create({
+          id: result.countryId,
           name: result.name,
-          lat: result.lat,
-          lng: result.lng,
-          countryName: result.countryName,
-          population: result.population,
+          latitude: result.lat,
+          longitude: result.lng,
+          bounding: result.bbox,
+          timezone: result.timezone,
         });
-        console.log(`💾 Guardado en caché (MongoDB): ${result.name}`);
+        console.log(`Guardado en MongoDB: ${result.name}`);
       } catch (saveError) {
-        console.error("No se pudo guardar en caché:", saveError);
+        console.error("No se pudo guardar en MongoDB:", saveError);
       }
-      // ----------------------------------------------------
 
-      return result;
+      // Enviamos a la documentacion la informacion ya lista
+      return getGeoCity(result);
     } catch (error) {
       console.error("Error en getCityDetails:", error);
       throw error;
