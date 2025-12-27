@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 
 export const dbConnection = async () => {
   try {
-    const url = process.env.MONGO_URL || "mongodb://mongo:27017/ciudad_data";
+    const url = process.env.MONGO_URL || "mongodb://mongo:27017/geo_data";
 
     await mongoose.connect(url);
 

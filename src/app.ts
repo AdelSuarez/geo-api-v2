@@ -6,6 +6,7 @@ import swaggerUi from "swagger-ui-express";
 import swaggerJsDoc from "swagger-jsdoc";
 import { geoRouter } from "./routes/geonames.routes";
 import { PORT } from "./config/envs";
+import { wbRouter } from "./routes/worldbank.routes";
 
 const app: Application = express();
 
@@ -36,5 +37,6 @@ app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 
 // Rutas
 app.use("/geo", geoRouter);
+app.use("/geo", wbRouter);
 
 export default app;

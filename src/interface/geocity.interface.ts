@@ -1,4 +1,4 @@
-import { City } from "./geoNames/geonames.inerfaces";
+import { City } from "./geoNames/geonames.interface";
 
 interface Bounding {
   east: number;

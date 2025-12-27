@@ -1,12 +1,12 @@
 import { GEONAMES_API_URL, GEONAMES_USER } from "../config/envs";
 import { getGeoCity } from "../interface/geocity.interface";
+import { City } from "../interface/geoNames/geonames.interface";
 import { CityModel } from "../models/city.model";
 
 export class GeoNameService {
   async getCityDetails(city: string) {
     // Verificamos en la base de datos primero si se encuentra
-    const cityDB = await this._getCitFromDB(city);
-
+    const cityDB = await this._getCityFromDB(city);
     if (cityDB) {
       return cityDB;
     }
@@ -40,20 +40,7 @@ export class GeoNameService {
       const result = data.geonames[0];
 
       // Guardamos en la basde de datos de mongo
-      try {
-        await CityModel.create({
-          searchName: city,
-          id: result.countryId,
-          name: result.name,
-          latitude: result.lat,
-          longitude: result.lng,
-          bounding: result.bbox,
-          timezone: result.timezone,
-        });
-        console.log(`Guardado en MongoDB: ${result.name}`);
-      } catch (saveError) {
-        console.error("No se pudo guardar en MongoDB:", saveError);
-      }
+      this._saveCityInDB(city, result);
 
       // Enviamos a la documentacion la informacion ya lista
       return getGeoCity(result);
@@ -63,7 +50,24 @@ export class GeoNameService {
     }
   }
 
-  private async _getCitFromDB(city: string) {
+  private async _saveCityInDB(city: string, result: City) {
+    try {
+      await CityModel.create({
+        searchName: city,
+        id: result.countryId,
+        name: result.name,
+        latitude: result.lat,
+        longitude: result.lng,
+        bounding: result.bbox,
+        timezone: result.timezone,
+      });
+      console.log(`Guardado en MongoDB: ${result.name}`);
+    } catch (saveError) {
+      console.error("No se pudo guardar en MongoDB:", saveError);
+    }
+  }
+
+  private async _getCityFromDB(city: string) {
     // Realizamos un formateo para poder comparar bien en la base de datos
     const searchNameCity = new RegExp(`^${city.trim()}$`, "i");
 
@@ -79,7 +83,7 @@ export class GeoNameService {
       // Retornamos la misma estructura que retorna la api para mantener consistencia
       // TODO: arreglar para que comparta el mismo formateo que getGeoCity, o que use la misma funcion
       if (cityDB) {
-        console.log(`Recuperado de MongoDB: ${cityDB.name}`);
+        console.log(`Recuperado de cities MongoDB: ${cityDB.name}`);
         return {
           id: cityDB.id,
           name: cityDB.name,
