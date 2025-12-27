@@ -36,5 +36,6 @@
 **/dist
 node_modules
 mongo-data
+cartero
 LICENSE
 README.md

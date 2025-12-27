@@ -28,7 +28,7 @@ const swaggerOptions = {
     servers: [{ url: `http://localhost:${PORT}` }],
   },
   apis: [path.join(__dirname, "./routes/*")],
-  //   apis: ["./src/routes/*.ts"], // Archivos donde documentaremos
+  //   apis: ["./src/routes/*.ts"],
 };
 
 const swaggerDocs = swaggerJsDoc(swaggerOptions);

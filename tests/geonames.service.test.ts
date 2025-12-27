@@ -1,7 +1,7 @@
 import { GeoNameService } from "../src/services/geonames.service";
 import { CityModel } from "../src/models/city.model";
 
-// 1. MOCKEAMOS EL MODELO DE MONGO (¡Esto es lo nuevo!)
+// 1. MOCKEAMOS EL MODELO DE MONGO
 // Le decimos a Jest: "No uses el archivo real, usa uno falso"
 jest.mock("../src/models/city.model");
 
@@ -15,9 +15,7 @@ describe("Servicio GeoNames", () => {
   });
 
   it("Debería traer datos completos (lat, lng) de una ciudad", async () => {
-    // --- PREPARACIÓN (ARRANGE) ---
-
-    // A. Simulamos que la BD está vacía (Cache Miss)
+    // A. Simulamos que la BD está vacía
     // Cuando el código llame a findOne, devolvemos null instantáneamente
     (CityModel.findOne as jest.Mock).mockResolvedValue(null);
 
