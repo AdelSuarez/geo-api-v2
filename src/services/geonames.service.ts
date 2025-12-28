@@ -115,4 +115,52 @@ export class GeoNameService {
       return null;
     }
   }
+
+  async getAllSavedCities() {
+    try {
+      // .sort({ _id: -1 }) hace que salgan las ultimas agregadas primero
+      const citiesDB = await CityModel.find().sort({ _id: -1 });
+
+      // Mapeamos los datos para devolver la estructura limpia (igual que _getCityFromDB)
+      return citiesDB.map((cityDB) => ({
+        id: cityDB.id, // Ojo: Asegúrate que tu modelo tenga este campo o usa cityDB._id
+        name: cityDB.name,
+        latitude: cityDB.latitude,
+        longitude: cityDB.longitude,
+        // Manejamos si bounding existe o no
+        bounding: cityDB.bounding
+          ? {
+              east: cityDB.bounding.east,
+              south: cityDB.bounding.south,
+              north: cityDB.bounding.north,
+              west: cityDB.bounding.west,
+              accuracyLevel: cityDB.bounding.accuracyLevel,
+            }
+          : undefined,
+        // Manejamos si timezone existe o no
+        timezone:
+          cityDB.timezone && cityDB.timezone.timeZoneId
+            ? {
+                gmtOffset: cityDB.timezone.gmtOffset,
+                timeZoneId: cityDB.timezone.timeZoneId,
+                dstOffset: cityDB.timezone.dstOffset,
+              }
+            : undefined,
+      }));
+    } catch (error) {
+      console.error("Error obteniendo historial de ciudades:", error);
+      throw new Error("No se pudo obtener el historial de ciudades");
+    }
+  }
+
+  async deleteCity(geoNameId: string) {
+    try {
+      // Usamos findOneAndDelete buscando por el campo 'id' que definiste en el Schema
+      const deletedCity = await CityModel.findOneAndDelete({ id: geoNameId });
+      return deletedCity;
+    } catch (error) {
+      console.error("Error eliminando ciudad:", error);
+      throw new Error("No se pudo eliminar la ciudad del caché");
+    }
+  }
 }

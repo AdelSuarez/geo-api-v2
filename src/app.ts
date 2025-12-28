@@ -4,9 +4,9 @@ import cors from "cors";
 import helmet from "helmet";
 import swaggerUi from "swagger-ui-express";
 import swaggerJsDoc from "swagger-jsdoc";
-import { geoRouter } from "./routes/geonames.routes";
+import { geoRouter } from "./routes/geographicandUrban.routes";
 import { PORT } from "./config/envs";
-import { wbRouter } from "./routes/worldbank.routes";
+// import { wbRouter } from "./routes/worldbank.routes";
 
 const app: Application = express();
 
@@ -37,6 +37,7 @@ app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 
 // Rutas
 app.use("/geo", geoRouter);
-app.use("/geo", wbRouter);
+// app.use("/geo", wbRouter);
+// app.use("/geo", );
 
 export default app;
