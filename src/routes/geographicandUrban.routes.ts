@@ -2,11 +2,19 @@ import { Router } from "express";
 import {
   deleteCity,
   getCity,
-  getHistoryCity,
+  getHistoryCities,
+  upadyeCity,
 } from "../controllers/geonames.controller";
-import { getPopulation } from "../controllers/worldbank.controller";
+import {
+  deleltePopulation,
+  getHistoryPopulations,
+  getPopulation,
+  // updatePopulation,
+} from "../controllers/worldbank.controller";
 
 const router = Router();
+
+//* GeoNames
 
 /**
  * @swagger
@@ -84,6 +92,79 @@ const router = Router();
  *         description: Ciudad no encontrada
  */
 router.get("/city/:city", getCity);
+
+/**
+ * @swagger
+ * /geo/history_cities:
+ *   get:
+ *     summary: Obtener el historial de ciudades consultadas y guardadas
+ *     tags:
+ *       - Geografico y urbano
+ *     responses:
+ *       200:
+ *         description: Lista de ciudades en el historial
+ */
+router.get("/history_cities", getHistoryCities);
+
+/**
+ * @swagger
+ * /geo/city_update/{id}:
+ *   put:
+ *     summary: Actualizar datos de una ciudad
+ *     tags:
+ *       - Geografico y urbano
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         description: ID de la ciudad (el numérico)
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 example: "nuevo nombre"
+ *               latitude:
+ *                 type: string
+ *                 example: "10.488"
+ *               longitude:
+ *                 type: string
+ *                 example: "-66.879"
+ *     responses:
+ *       200:
+ *         description: Ciudad actualizada
+ *       404:
+ *         description: Ciudad no encontrada
+ */
+router.put("/city_update/:id", upadyeCity);
+
+/**
+ * @swagger
+ * /geo/city_delete/{id}:
+ *   delete:
+ *     summary: Eliminar una ciudad guardada en MongoDB por su ID
+ *     tags:
+ *       - Geografico y urbano
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         description: ID de la ciudad (el número que aparece en el historial, ej. 3625428)
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Ciudad eliminada
+ *       404:
+ *         description: No se encontró la ciudad en la base de datos
+ */
+router.delete("/city_delete/:id", deleteCity);
 
 /**
  * @swagger
@@ -166,39 +247,79 @@ router.get("/city/:city", getCity);
  */
 router.get("/population/:countryCode", getPopulation);
 
+//* WordlBank
+
 /**
  * @swagger
- * /geo/history:
+ * /geo/history_populations:
  *   get:
- *     summary: Obtener el historial de ciudades consultadas y guardadas
+ *     summary: Obtener el historial la poblacion consultadas y guardadas
  *     tags:
  *       - Geografico y urbano
  *     responses:
  *       200:
- *         description: Lista de ciudades en el historial
+ *         description: Lista de la poblacion en el historial
  */
-router.get("/history", getHistoryCity);
+router.get("/history_populations", getHistoryPopulations);
+
+// /**
+//  * @swagger
+//  * /geo/population_update/{id}:
+//  *   put:
+//  *     summary: Actualizar datos de una poblacion
+//  *     tags:
+//  *       - Geografico y urbano
+//  *     parameters:
+//  *       - in: path
+//  *         name: id
+//  *         required: true
+//  *         description: ID de la poblacion
+//  *         schema:
+//  *           type: string
+//  *     requestBody:
+//  *       required: true
+//  *       content:
+//  *         application/json:
+//  *           schema:
+//  *             type: object
+//  *             properties:
+//  *               name:
+//  *                 type: string
+//  *                 example: "nuevo nombre"
+//  *               latitude:
+//  *                 type: string
+//  *                 example: "10.488"
+//  *               longitude:
+//  *                 type: string
+//  *                 example: "-66.879"
+//  *     responses:
+//  *       200:
+//  *         description: Ciudad actualizada
+//  *       404:
+//  *         description: Ciudad no encontrada
+//  */
+// router.put("/population_update/:id", updatePopulation);
 
 /**
  * @swagger
- * /geo/city_delete/{id}:
+ * /geo/population_delete/{id}:
  *   delete:
- *     summary: Eliminar una ciudad guardada en MongoDB por su ID
+ *     summary: Eliminar una poblacion guardada en MongoDB por su ID
  *     tags:
  *       - Geografico y urbano
  *     parameters:
  *       - in: path
  *         name: id
  *         required: true
- *         description: ID de la ciudad (el número que aparece en el historial, ej. 3625428)
+ *         description: ID de la poblacion (el número que aparece en el historial, ej. AR`)
  *         schema:
  *           type: string
  *     responses:
  *       200:
- *         description: Ciudad eliminada del caché
+ *         description: poblacion eliminada
  *       404:
  *         description: No se encontró la ciudad en la base de datos
  */
-router.delete("/city_delete/:id", deleteCity);
+router.delete("/population_delete/:id", deleltePopulation);
 
 export const geoRouter = router;

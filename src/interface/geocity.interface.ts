@@ -14,7 +14,7 @@ interface TimeZone {
   dstOffset: number;
 }
 
-interface GeoCity {
+export interface GeoCity {
   id: string;
   name: string;
   longitude: string;

@@ -1,6 +1,6 @@
-import { getWorldBank } from "../interface/worldbank.interface";
+import { getWorldBank, WorldBank } from "../interface/worldbank.interface";
 import { DataElement } from "../interface/worldBank/worldbank.interface";
-import { PopulationModel } from "../models/population.model";
+import { IPopulationDB, PopulationModel } from "../models/population.model";
 
 export class WorldBankService {
   private readonly INDICATORS = {
@@ -94,31 +94,7 @@ export class WorldBankService {
 
       if (populationData) {
         console.log(`Recuperado de Population MongoDB: ${code}`);
-        return {
-          id: populationData.id,
-          name: populationData.name,
-          countryiso3code: populationData.countryiso3code,
-          totalPopulation: {
-            date: populationData.totalPopulation?.date,
-            value: populationData.totalPopulation?.value,
-          },
-          lifeExpectance: {
-            date: populationData.lifeExpectance?.date,
-            value: populationData.lifeExpectance?.value,
-          },
-          populationGrowth: {
-            date: populationData.populationGrowth?.date,
-            value: populationData.populationGrowth?.value,
-          },
-          male: {
-            date: populationData.male?.date,
-            value: populationData.male?.value,
-          },
-          female: {
-            date: populationData.female?.date,
-            value: populationData.female?.value,
-          },
-        };
+        return this._mapPopulationResponse(populationData);
       }
 
       return null;
@@ -168,5 +144,59 @@ export class WorldBankService {
     } catch (saveError) {
       console.error("No se pudo guardar en DB:", saveError);
     }
+  }
+
+  async getAllSavedPopulation() {
+    try {
+      const populationsDB = await PopulationModel.find().sort({ _id: -1 });
+
+      return populationsDB.map((populationDB) =>
+        this._mapPopulationResponse(populationDB)
+      );
+    } catch (error) {
+      console.error("Error obteniendo historial de poblacion:", error);
+      throw new Error("No se pudo obtener el historial de poblacion");
+    }
+  }
+
+  async deleltePopulation(id: string) {
+    try {
+      const deletedPopulation = await PopulationModel.findOneAndDelete({
+        id: id,
+      });
+
+      return deletedPopulation;
+    } catch (error) {
+      console.error("Error eliminando poblacion:", error);
+      throw new Error("No se pudo eliminar la poblacion");
+    }
+  }
+
+  private _mapPopulationResponse(populationDB: IPopulationDB): WorldBank {
+    return {
+      id: populationDB.id,
+      name: populationDB.name,
+      countryiso3code: populationDB.countryiso3code,
+      totalPopulation: {
+        date: populationDB.totalPopulation?.date,
+        value: populationDB.totalPopulation?.value,
+      },
+      lifeExpectance: {
+        date: populationDB.lifeExpectance?.date,
+        value: populationDB.lifeExpectance?.value,
+      },
+      populationGrowth: {
+        date: populationDB.populationGrowth?.date,
+        value: populationDB.populationGrowth?.value,
+      },
+      male: {
+        date: populationDB.male?.date,
+        value: populationDB.male?.value,
+      },
+      female: {
+        date: populationDB.female?.date,
+        value: populationDB.female?.value,
+      },
+    };
   }
 }

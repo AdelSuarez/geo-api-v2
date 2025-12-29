@@ -1,7 +1,7 @@
 import { GEONAMES_API_URL, GEONAMES_USER } from "../config/envs";
-import { getGeoCity } from "../interface/geocity.interface";
+import { GeoCity, getGeoCity } from "../interface/geocity.interface";
 import { City } from "../interface/geoNames/geonames.interface";
-import { CityModel } from "../models/city.model";
+import { CityModel, ICityDB } from "../models/city.model";
 
 export class GeoNameService {
   async getCityDetails(city: string) {
@@ -81,32 +81,10 @@ export class GeoNameService {
       });
 
       // Retornamos la misma estructura que retorna la api para mantener consistencia
-      // TODO: arreglar para que comparta el mismo formateo que getGeoCity, o que use la misma funcion
+
       if (cityDB) {
         console.log(`Recuperado de cities MongoDB: ${cityDB.name}`);
-        return {
-          id: cityDB.id,
-          name: cityDB.name,
-          longitude: cityDB.longitude,
-          latitude: cityDB.latitude,
-          bounding: cityDB.bounding
-            ? {
-                east: cityDB.bounding.east,
-                south: cityDB.bounding.south,
-                north: cityDB.bounding.north,
-                west: cityDB.bounding.west,
-                accuracyLevel: cityDB.bounding.accuracyLevel,
-              }
-            : undefined,
-          timezone:
-            cityDB.timezone && cityDB.timezone.timeZoneId
-              ? {
-                  gmtOffset: cityDB.timezone.gmtOffset,
-                  timeZoneId: cityDB.timezone.timeZoneId,
-                  dstOffset: cityDB.timezone.dstOffset,
-                }
-              : undefined,
-        };
+        return this._mapCityResponse(cityDB);
       }
 
       return null;
@@ -122,45 +100,59 @@ export class GeoNameService {
       const citiesDB = await CityModel.find().sort({ _id: -1 });
 
       // Mapeamos los datos para devolver la estructura limpia (igual que _getCityFromDB)
-      return citiesDB.map((cityDB) => ({
-        id: cityDB.id, // Ojo: Asegúrate que tu modelo tenga este campo o usa cityDB._id
-        name: cityDB.name,
-        latitude: cityDB.latitude,
-        longitude: cityDB.longitude,
-        // Manejamos si bounding existe o no
-        bounding: cityDB.bounding
-          ? {
-              east: cityDB.bounding.east,
-              south: cityDB.bounding.south,
-              north: cityDB.bounding.north,
-              west: cityDB.bounding.west,
-              accuracyLevel: cityDB.bounding.accuracyLevel,
-            }
-          : undefined,
-        // Manejamos si timezone existe o no
-        timezone:
-          cityDB.timezone && cityDB.timezone.timeZoneId
-            ? {
-                gmtOffset: cityDB.timezone.gmtOffset,
-                timeZoneId: cityDB.timezone.timeZoneId,
-                dstOffset: cityDB.timezone.dstOffset,
-              }
-            : undefined,
-      }));
+      return citiesDB.map((cityDB) => this._mapCityResponse(cityDB));
     } catch (error) {
       console.error("Error obteniendo historial de ciudades:", error);
       throw new Error("No se pudo obtener el historial de ciudades");
     }
   }
 
-  async deleteCity(geoNameId: string) {
+  async deleteCity(id: string) {
     try {
       // Usamos findOneAndDelete buscando por el campo 'id' que definiste en el Schema
-      const deletedCity = await CityModel.findOneAndDelete({ id: geoNameId });
+      const deletedCity = await CityModel.findOneAndDelete({ id: id });
       return deletedCity;
     } catch (error) {
       console.error("Error eliminando ciudad:", error);
-      throw new Error("No se pudo eliminar la ciudad del caché");
+      throw new Error("No se pudo eliminar la ciudad");
     }
+  }
+
+  async aupdateCity(id: string, updateData: any) {
+    const updatedCity = await CityModel.findOneAndUpdate(
+      { id: id },
+      updateData,
+      { new: true }
+    );
+
+    if (!updatedCity) return null;
+
+    return this._mapCityResponse(updatedCity);
+  }
+
+  private _mapCityResponse(cityDB: ICityDB): GeoCity {
+    return {
+      id: cityDB.id,
+      name: cityDB.name,
+      longitude: cityDB.longitude,
+      latitude: cityDB.latitude,
+      bounding: cityDB.bounding
+        ? {
+            east: cityDB.bounding.east,
+            south: cityDB.bounding.south,
+            north: cityDB.bounding.north,
+            west: cityDB.bounding.west,
+            accuracyLevel: cityDB.bounding.accuracyLevel,
+          }
+        : undefined,
+      timezone:
+        cityDB.timezone && cityDB.timezone.timeZoneId
+          ? {
+              gmtOffset: cityDB.timezone.gmtOffset,
+              timeZoneId: cityDB.timezone.timeZoneId,
+              dstOffset: cityDB.timezone.dstOffset,
+            }
+          : undefined,
+    };
   }
 }

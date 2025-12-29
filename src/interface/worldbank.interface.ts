@@ -40,7 +40,7 @@ interface TotalPopulation {
   value: number;
 }
 
-interface WorldBank {
+export interface WorldBank {
   id: string;
   name: string;
   countryiso3code: string;

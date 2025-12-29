@@ -1,6 +1,34 @@
-import { Schema, model } from "mongoose";
+import { Schema, model, Document } from "mongoose";
 
-const PopulationSchema = new Schema({
+export interface IPopulationDB extends Document {
+  id: string;
+  searchName: string;
+  name: string;
+  countryiso3code: string;
+  totalPopulation: {
+    date: string;
+    value: number;
+  };
+  lifeExpectance: {
+    date: string;
+    value: number;
+  };
+  populationGrowth: {
+    date: string;
+    value: number;
+  };
+  male: {
+    date: string;
+    value: number;
+  };
+  female: {
+    date: string;
+    value: number;
+  };
+  createdAt: Date;
+}
+
+const PopulationSchema = new Schema<IPopulationDB>({
   id: { type: String, required: true },
   searchName: { type: String, required: true },
   name: { type: String, required: true },
@@ -32,4 +60,7 @@ const PopulationSchema = new Schema({
 
 PopulationSchema.index({ name: 1 });
 
-export const PopulationModel = model("Population", PopulationSchema);
+export const PopulationModel = model<IPopulationDB>(
+  "Population",
+  PopulationSchema
+);

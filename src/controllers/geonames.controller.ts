@@ -19,7 +19,7 @@ export const getCity = async (req: Request, res: Response) => {
   }
 };
 
-export const getHistoryCity = async (req: Request, res: Response) => {
+export const getHistoryCities = async (req: Request, res: Response) => {
   try {
     const cities = await service.getAllSavedCities();
 
@@ -55,5 +55,33 @@ export const deleteCity = async (req: Request, res: Response) => {
     });
   } catch (error) {
     return res.status(500).json({ message: "Error interno del servidor" });
+  }
+};
+
+export const upadyeCity = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const body = req.body;
+
+    if (!id) {
+      return res
+        .status(400)
+        .json({ message: "Se requiere el Id de la ciudad " });
+    }
+
+    const update = await service.aupdateCity(id, body);
+
+    if (!update) {
+      return res.status(404).json({
+        message: "Ciudad no encontrada en mongo",
+      });
+    }
+
+    return res.status(200).json({
+      message: "Ciudad actualizada correctamente",
+      data: update,
+    });
+  } catch (error) {
+    return res.status(500).json({ message: "Error interno al actualizar" });
   }
 };
