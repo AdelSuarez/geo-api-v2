@@ -6,6 +6,7 @@ import swaggerUi from "swagger-ui-express";
 import swaggerJsDoc from "swagger-jsdoc";
 import { geoRouter } from "./routes/geographicandUrban.routes";
 import { PORT } from "./config/envs";
+import { transitRouter } from "./routes/transit.routes";
 // import { wbRouter } from "./routes/worldbank.routes";
 
 const app: Application = express();
@@ -39,5 +40,7 @@ app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 app.use("/geo", geoRouter);
 // app.use("/geo", wbRouter);
 // app.use("/geo", );
+
+app.use("/transit", transitRouter);
 
 export default app;
