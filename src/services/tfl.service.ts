@@ -93,8 +93,8 @@ export class TflService {
             destination: arrival.destinationName,
             platform: arrival.platformName,
             timeToStation: arrival.timeToStation,
-            // expectedArrival: arrival.expectedArrival
-            expectedArrival: arrival.expectedArrival.toString()
+            expectedArrival: arrival.expectedArrival
+            // expectedArrival: arrival.expectedArrival.toString()
         };
     }
 

@@ -96,4 +96,83 @@ describe("TflService", () => {
         "Fetch error in TFL: Unauthorized" // <--- Esto coincide con tu código real
     );
   });
+
+  describe("getEta", () => {
+    
+    it("debe obtener ETA, ordenar por tiempo y formatear minutos", async () => {
+      const stopId = "940GZZLUBST";
+      
+      // MOCK DATA: El tren lento (300s) primero, el rápido (60s) segundo
+      const mockArrivals = [
+        {
+          lineName: "Bakerloo",
+          destinationName: "Elephant & Castle",
+          platformName: "Platform 3",
+          timeToStation: 300, 
+          expectedArrival: "2026-01-04T20:05:00Z"
+        },
+        {
+          lineName: "Circle",
+          destinationName: "Edgware Road",
+          platformName: "Platform 1",
+          timeToStation: 60, 
+          expectedArrival: "2026-01-04T20:01:00Z"
+        },
+      ];
+
+      // Simulamos respuesta exitosa
+      (global.fetch as jest.Mock).mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: async () => mockArrivals,
+      });
+
+      // AQUÍ USAMOS 'service' (que viene del describe padre)
+      const result = await service.getEta(stopId);
+
+      // Verificaciones
+      expect(global.fetch).toHaveBeenCalled();
+      const urlCalled = (global.fetch as jest.Mock).mock.calls[0][0]; // Verificamos la última llamada (o la única en este test)
+      expect(urlCalled).toContain(`/StopPoint/${stopId}/Arrivals`);
+
+      expect(result).toHaveLength(2);
+      
+      // Verificar ORDENAMIENTO (El de 60s debe ir primero)
+      expect(result[0].line).toBe("Circle");
+      expect(result[0].timeToStation).toBe(60);
+      expect(result[0].expectedArrival).toBe("2026-01-04T20:01:00Z");
+
+      // El segundo debe ser el de 300s
+      expect(result[1].line).toBe("Bakerloo");
+      expect(result[1].timeToStation).toBe(300);
+      expect(result[1].expectedArrival).toBe("2026-01-04T20:05:00Z");
+    });
+
+    it("debe devolver array vacío si la estación no existe (404)", async () => {
+      (global.fetch as jest.Mock).mockResolvedValue({
+        ok: false,
+        status: 404, 
+        json: async () => ({}),
+      });
+
+      const result = await service.getEta("INVALID_ID");
+
+      expect(result).toEqual([]);
+    });
+
+    it("debe lanzar error si falla la conexión (500)", async () => {
+      (global.fetch as jest.Mock).mockResolvedValue({
+        ok: false,
+        status: 500,
+        statusText: "Internal Server Error",
+      });
+
+      await expect(service.getEta("940GZZLUBST")).rejects.toThrow(
+        "Fetch error in TFL: Internal Server Error"
+      );
+    });
+
+  });
+
 });
+
