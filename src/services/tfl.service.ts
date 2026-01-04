@@ -1,6 +1,9 @@
 // import { XMLParser } from "fast-xml-parser";
 import { TRANSIT_API_URL, TRANSIT_APP_KEY } from "../config/envs";
 import { TransitRoute,  TransitEta} from "../interface/tfl/tfl.interface";
+import { IncidentInput } from "../interface/tfl/tfl.interface";
+import { IncidentModel } from "../models/incident.model";
+import { isValidObjectId } from "mongoose";
 
 
 export class TflService {
@@ -37,7 +40,7 @@ export class TflService {
     }
 
     async getEta(stopId: string) {
-    // Si no hay ID, retornamos array vacío por seguridad
+    // Si no hay ID array vacio por si acaso
     if (!stopId) return [];
 
     const params = new URLSearchParams({
@@ -50,7 +53,7 @@ export class TflService {
     try {
       const response = await fetch(url);
       
-      // Si el ID de la parada está mal, TfL devuelve 404
+      // Si el ID esta mal 404
       if (response.status === 404) {
          console.warn(`StopPoint ID ${stopId} not found.`);
          return [];
@@ -62,7 +65,7 @@ export class TflService {
 
       const data = await response.json();
 
-      // Mapeamos y luego ordenamos por tiempo (el más cercano primero)
+      // map y sort por tiempo
       return data
         .map((train: any) => this._mapEtaToInterface(train))
         .sort((a: TransitEta, b: TransitEta) => a.timeToStation - b.timeToStation);
@@ -72,6 +75,54 @@ export class TflService {
       throw error;
     }
   }
+
+    public async reportIncident(data: IncidentInput) {
+        try {
+            // Instanciamos el modelo con los datos recibidos
+            const newIncident = new IncidentModel(data);
+            
+            // Guardar en MongoDB
+            const result = await newIncident.save();
+            
+            return result;
+        } catch (error) {
+            console.error("Error saving on DB:", error);
+            throw new Error("Database error: Could not save incident");
+        }
+    }
+
+    public async deleteIncident(id: string) {
+        // validobject de mongo
+        if (!isValidObjectId(id)) {
+            return null;
+        }
+
+        try {
+            // findByIDAndDelete de mongo
+            const deleted = await IncidentModel.findByIdAndDelete(id);
+            return deleted;
+        } catch (error) {
+            console.error("Error deleting incident:", error);
+            throw new Error("Database error: Could not delete incident");
+        }
+    }
+
+    public async updateIncident(id: string, data: IncidentInput) {
+        // validobject de mongo
+        if (!isValidObjectId(id)) {
+            return null;
+        }
+
+        try {
+             // findByIDAndDelete de mongo { new: true } para recibir el objeto editado
+            const updatedIncident = await IncidentModel.findByIdAndUpdate(id, data, { new: true });
+            
+            return updatedIncident;
+        } catch (error) {
+            console.error("Error updating incident:", error);
+            throw new Error("Database error: Could not update incident");
+        }
+    }
 
     private _mapToInterface(line: any): TransitRoute {
     // La API devuelve un array de estados, tomamos el primero (el actual)

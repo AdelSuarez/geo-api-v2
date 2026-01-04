@@ -12,3 +12,10 @@ export interface TransitEta {
     timeToStation: number;
     expectedArrival: string;
 }
+
+export interface IncidentInput {
+    type: string;
+    line: string;
+    description: string;
+    stopId?: string;
+}

@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { getTflStatus, getTflEta } from "../controllers/tfl.controller";
+import { getTflStatus, getTflEta, createIncident, deleteIncident, updateIncident } from "../controllers/tfl.controller";
 const router = Router();
 
 /**
@@ -99,5 +99,114 @@ router.get("/routes/:city", getTflStatus);
  *         description: Falta el parametro stop_id
  */
 router.get("/eta", getTflEta);
+
+/**
+ * @swagger
+ * /transit/incident:
+ *   post:
+ *     summary: Reportar un incidente de transporte
+ *     description: Guarda un nuevo incidente en la base de datos local.
+ *     tags:
+ *       - Transporte
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - type
+ *               - line
+ *               - description
+ *             properties:
+ *               type:
+ *                 type: string
+ *                 description: Tipo de incidente (ej. "retraso", "huelga", "accidente")
+ *                 example: retraso
+ *               line:
+ *                 type: string
+ *                 description: Nombre de la línea afectada
+ *                 example: Bakerloo
+ *               description:
+ *                 type: string
+ *                 description: Detalle de lo sucedido
+ *                 example: Tren detenido por problemas de señalizacion
+ *               stopId:
+ *                 type: string
+ *                 description: (Opcional) ID de la estación donde ocurre
+ *                 example: 940GZZLUBST
+ *     responses:
+ *       201:
+ *         description: Incidente creado exitosamente
+ *       400:
+ *         description: Faltan datos obligatorios
+ *       500:
+ *         description: Error del servidor al guardar
+ */
+router.post("/incident", createIncident);
+
+/**
+ * @swagger
+ * /transit/incident/{id}:
+ *   delete:
+ *     summary: Eliminar un incidente
+ *     description: Borra un incidente de la base de datos usando su ID.
+ *     tags:
+ *       - Transporte
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: El ID de MongoDB del incidente (ej. 659d4f...)
+ *     responses:
+ *       200:
+ *         description: Eliminado correctamente
+ *       404:
+ *         description: Incidente no encontrado
+ *       500:
+ *         description: Error del servidor
+ */
+router.delete("/incident/:id", deleteIncident);
+
+/**
+ * @swagger
+ * /transit/incident/{id}:
+ *   put:
+ *     summary: Editar un incidente existente
+ *     tags:
+ *       - Transporte
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: ID del incidente a modificar
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               type:
+ *                 type: string
+ *                 description: Nuevo tipo
+ *               line:
+ *                 type: string
+ *                 description: Nueva línea
+ *               description:
+ *                 type: string
+ *                 description: Nueva descripción
+ *     responses:
+ *       200:
+ *         description: Actualizado correctamente
+ *       404:
+ *         description: Incidente no encontrado
+ */
+router.put("/incident/:id", updateIncident);
+
 
 export const transitRouter = router;
