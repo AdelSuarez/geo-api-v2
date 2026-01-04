@@ -1,6 +1,6 @@
 // import { XMLParser } from "fast-xml-parser";
 import { TRANSIT_API_URL, TRANSIT_APP_KEY } from "../config/envs";
-import { TransitRoute } from "../interface/tfl/tfl.interface";
+import { TransitRoute,  TransitEta} from "../interface/tfl/tfl.interface";
 
 
 export class TflService {
@@ -36,6 +36,43 @@ export class TflService {
 
     }
 
+    async getEta(stopId: string) {
+    // Si no hay ID, retornamos array vacío por seguridad
+    if (!stopId) return [];
+
+    const params = new URLSearchParams({
+      app_key: TRANSIT_APP_KEY || "",
+    });
+
+    // Endpoint: /StopPoint/{id}/Arrivals
+    const url = `${TRANSIT_API_URL}/StopPoint/${stopId}/Arrivals?${params.toString()}`;
+
+    try {
+      const response = await fetch(url);
+      
+      // Si el ID de la parada está mal, TfL devuelve 404
+      if (response.status === 404) {
+         console.warn(`StopPoint ID ${stopId} not found.`);
+         return [];
+      }
+
+      if (!response.ok) {
+        throw new Error(`Fetch error in TFL: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+
+      // Mapeamos y luego ordenamos por tiempo (el más cercano primero)
+      return data
+        .map((train: any) => this._mapEtaToInterface(train))
+        .sort((a: TransitEta, b: TransitEta) => a.timeToStation - b.timeToStation);
+
+    } catch (error) {
+      console.error("Error in getEstimatetArrival:", error);
+      throw error;
+    }
+  }
+
     private _mapToInterface(line: any): TransitRoute {
     // La API devuelve un array de estados, tomamos el primero (el actual)
     const currentStatus = line.lineStatuses && line.lineStatuses.length > 0 
@@ -49,4 +86,16 @@ export class TflService {
             details: currentStatus.reason || "" // Ej: "Minor delays due to..."
         };
     }
+
+    private _mapEtaToInterface(arrival: any): TransitEta {
+        return {
+            line: arrival.lineName,
+            destination: arrival.destinationName,
+            platform: arrival.platformName,
+            timeToStation: arrival.timeToStation,
+            // expectedArrival: arrival.expectedArrival
+            expectedArrival: arrival.expectedArrival.toString()
+        };
+    }
+
 }

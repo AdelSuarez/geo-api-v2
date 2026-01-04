@@ -27,3 +27,34 @@ export const getTflStatus = async (req: Request, res: Response) => {
     }
 };
 
+export const getTflEta = async (req: Request, res: Response) => {
+    
+    try {
+        //  console.log("Query:", req.query);
+        // const stopId = req.query.stop_Id as string; // Toma el ID de la parada de la URL
+
+        const { stop_id } = req.query;
+        
+
+        if (!stop_id || typeof stop_id !== "string") {
+            return res.status(400).json({ error: "Se requiere el ID de la parada" });
+        }
+
+        const data = await service.getEta(stop_id);
+
+        // Para mostrar solo el siguiente tren
+
+        // const nextUnit = data.length > 0 ? data[0] : null;
+
+        // if (!nextUnit) {
+        //      return res.status(404).json({ message: "No hay trenes proximos" });
+        // }
+
+        return res.status(200).json(data);
+
+        // return res.status(200).json(nextUnit);
+        
+    } catch (error) {
+        return res.status(500).json({ error: "Error del servidor" });
+    }
+};
