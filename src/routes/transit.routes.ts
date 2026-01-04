@@ -65,7 +65,7 @@ router.get("/routes/:city", getTflStatus);
  *       - in: query
  *         name: stop_id
  *         required: true
- *         description: ID de la estación (ej. 940GZZLUBST Baker Street, 940GZZLUKSX Kings Cross St Pancras, 940GZZLUVIC Victoria)
+ *         description: ID de la estacion (ej. 940GZZLUBST Baker Street, 940GZZLUKSX Kings Cross St Pancras, 940GZZLUVIC Victoria)
  *         schema:
  *           type: string
  *     responses:
@@ -196,10 +196,10 @@ router.delete("/incident/:id", deleteIncident);
  *                 description: Nuevo tipo
  *               line:
  *                 type: string
- *                 description: Nueva línea
+ *                 description: Nueva linea
  *               description:
  *                 type: string
- *                 description: Nueva descripción
+ *                 description: Nueva descripcion
  *     responses:
  *       200:
  *         description: Actualizado correctamente
