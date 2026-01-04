@@ -94,7 +94,7 @@ router.get("/routes/:city", getTflStatus);
  *                   expected:
  *                     type: string
  *                     description: Tiempo legible
- *                     example: "2 mins"
+ *                     example: "2026-01-04T20:05:00Z"
  *       400:
  *         description: Falta el parametro stop_id
  */
