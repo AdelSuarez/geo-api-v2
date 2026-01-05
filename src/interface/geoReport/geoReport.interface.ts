@@ -80,24 +80,9 @@ export interface ReportMetadata {
   similarReportsNearby?: number;
 }
 
-export interface updateData {
-    title: string;
-    status: string;
-    priority: string;
-    description: string;
-}
 
-/**
- * Metadatos para reportes cercanos
- */
-export interface NearbyReportsMetadata {
-  center: {
-    latitude: number;
-    longitude: number;
-  };
-  radius: number;
-  unit: "meters";
-}
+
+
 
 /**
  * Error de validación
