@@ -37,15 +37,7 @@ export interface GetReportResponse {
   data: ReportData;
 }
 
-/**
- * Interfaz para la respuesta del endpoint GET /geo/reports/nearby
- */
-export interface NearbyReportsResponse {
-  success: boolean;
-  count: number;
-  data: ReportData[];
-  metadata: NearbyReportsMetadata;
-}
+
 
 /**
  * Datos principales del reporte
@@ -86,6 +78,13 @@ export interface ReportMetadata {
   userAgent?: string;
   estimatedResponseTime: string;
   similarReportsNearby?: number;
+}
+
+export interface updateData {
+    title: string;
+    status: string;
+    priority: string;
+    description: string;
 }
 
 /**
@@ -136,22 +135,63 @@ export type ReportPriority =
   | "high"      // Alta
   | "critical"; // Crítica
 
-/**
- * Interface para estadísticas de reportes
- */
-export interface ReportStats {
-  total: number;
-  byCategory: {
-    [category in ReportCategory]: number;
+
+
+
+export interface IReportResponse {
+  id: string | undefined;  
+  title: string;
+  description: string;
+  category: string;
+  location: {
+    coordinates: [number, number];
+    address?: string;
+    city: string;
+    country: string;
   };
-  byStatus: {
-    [status in ReportStatus]: number;
+  priority: string;
+  trackingCode: string;
+  status: string;
+  metadata: {
+    ipAddress?: string;
+    userAgent?: string;
+    submittedAt: Date;
+    updatedAt: Date;
+    resolvedAt?: Date;
+    estimatedResponseTime: string;
+    similarReportsNearby?: number;
   };
-  byPriority: {
-    [priority in ReportPriority]: number;
-  };
-  last30Days: {
-    date: string;
-    count: number;
-  }[];
+  userId?: string;
+  mediaUrls?: string[];
 }
+
+
+export interface CreateReportInput {
+  title: string;
+  description: string;
+  category: ReportCategory;
+  latitude: number;
+  longitude: number;
+  city: string;
+  country: string;
+  address?: string;
+  priority?: ReportPriority;
+  mediaUrls?: string[];
+  userId?: string;
+  ipAddress?: string;
+  userAgent?: string;
+}
+
+
+export interface UpdateReportInput {
+  title?: string;
+  description?: string;
+  category?: ReportCategory;
+  status?: ReportStatus;
+  priority?: ReportPriority;
+  address?: string;
+  mediaUrls?: string[];
+  resolvedAt?: Date;
+}
+
+

@@ -1,11 +1,43 @@
+import { 
+  IReportResponse, 
+  CreateReportInput,  
+  UpdateReportInput   
+} from "../interface/geoReport/geoReport.interface";
 import { ReportModel, IReportDB } from "../models/geoReport.model";
+
+// Tipo para la preparación de datos
+interface ReportForDB {
+  title: string;
+  description: string;
+  category: string;
+  location: {
+    type: "Point";
+    coordinates: [number, number];
+    address?: string;
+    city: string;
+    country: string;
+  };
+  priority: string;
+  userId?: string;
+  mediaUrls: string[];
+  trackingCode: string;
+  status: string;
+  metadata: {
+    ipAddress?: string;
+    userAgent?: string;
+    createdAt: Date;
+    updatedAt: Date;
+    estimatedResponseTime: string;
+    similarReportsNearby?: number;
+  };
+}
 
 export class ReportService {
   
   /**
    * Crear un nuevo reporte 
    */
-  async createReport(reportData: any): Promise<IReportDB> {
+  async createReport(reportData: CreateReportInput): Promise<IReportResponse> {
     try {
       console.log(" Service: Iniciando creación de reporte...");
 
@@ -19,7 +51,7 @@ export class ReportService {
       const savedReport = await report.save();
       
       console.log(` Service: Reporte guardado. ID: ${savedReport._id}`);
-      return savedReport;
+      return this._mapReportResponse(savedReport);
       
     } catch (error) {
       console.error(" Service: Error en createReport:", error);
@@ -30,11 +62,10 @@ export class ReportService {
   /**
    * Obtener reporte por ID 
    */
-  async getReportById(id: string): Promise<IReportDB | null> {
+  async getReportById(id: string): Promise<IReportResponse | null> {
     try {
       console.log(` Service: Buscando reporte ID: ${id}`);
       
-      // Buscar directamente 
       const report = await ReportModel.findById(id);
       
       if (report) {
@@ -54,18 +85,16 @@ export class ReportService {
   /**
    * Obtener todos los reportes 
    */
-  async getAllReports(): Promise<IReportDB[]> {
+  async getAllReports(): Promise<IReportResponse[]> {
     try {
       console.log(" Service: Obteniendo todos los reportes...");
       
-      // Buscar y ordenar 
       const reports = await ReportModel.find()
         .sort({ createdAt: -1 })
         .limit(50);
       
       console.log(` Service: ${reports.length} reportes obtenidos`);
       
-      // Mapear respuesta 
       return reports.map(report => this._mapReportResponse(report));
       
     } catch (error) {
@@ -75,13 +104,12 @@ export class ReportService {
   }
 
   /**
-   * Eliminar reporte - SIGUIENDO EL MISMO PATRÓN
+   * Eliminar reporte 
    */
-  async deleteReport(id: string): Promise<IReportDB | null> {
+  async deleteReport(id: string): Promise<IReportResponse | null> {
     try {
       console.log(` Service: Eliminando reporte ID: ${id}`);
       
-      // Eliminar (igual que CityModel.findOneAndDelete)
       const deletedReport = await ReportModel.findByIdAndDelete(id);
       
       if (deletedReport) {
@@ -99,13 +127,12 @@ export class ReportService {
   }
 
   /**
-   * Actualizar reporte - SIGUIENDO EL MISMO PATRÓN
+   * Actualizar reporte 
    */
-  async updateReport(id: string, updateData: any): Promise<IReportDB | null> {
+  async updateReport(id: string, updateData: UpdateReportInput): Promise<IReportResponse | null> {
     try {
       console.log(` Service: Actualizando reporte ID: ${id}`);
       
-      // Actualizar (igual que CityModel.findOneAndUpdate)
       const updatedReport = await ReportModel.findByIdAndUpdate(
         id, 
         { 
@@ -139,8 +166,7 @@ export class ReportService {
   /**
    * Preparar datos para MongoDB 
    */
-  private _prepareReportForDB(data: any): any {
-    // Generar trackingCode (lógica de negocio)
+  private _prepareReportForDB(data: CreateReportInput): ReportForDB {
     const trackingCode = `REP-${Date.now()}-${Math.random()
       .toString(36)
       .substr(2, 6)
@@ -151,10 +177,10 @@ export class ReportService {
       description: data.description?.trim(),
       category: data.category,
       location: {
-        type: "Point", // Para GeoJSON
+        type: "Point",
         coordinates: [
-          parseFloat(data.longitude),
-          parseFloat(data.latitude)
+          parseFloat(data.longitude.toString()),
+          parseFloat(data.latitude.toString())
         ],
         address: data.address?.trim(),
         city: data.city?.trim(),
@@ -163,12 +189,15 @@ export class ReportService {
       priority: data.priority || "medium",
       userId: data.userId?.trim(),
       mediaUrls: Array.isArray(data.mediaUrls) ? data.mediaUrls : [],
-      trackingCode: trackingCode,
+      trackingCode,
       status: "pending",
       metadata: {
-        ipAddress: data.ipAddress || "Desconocido",
-        userAgent: data.userAgent || "Desconocido",
-        submittedAt: new Date()
+        ipAddress: data.ipAddress || "Unknown",
+        userAgent: data.userAgent || "Unknown",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        estimatedResponseTime: "72 horas",
+        similarReportsNearby: 0
       }
     };
   }
@@ -176,33 +205,35 @@ export class ReportService {
   /**
    * Mapear respuesta 
    */
-private _mapReportResponse(reportDB: IReportDB): any {
-  return {
-    id: reportDB._id,
-    title: reportDB.title,
-    description: reportDB.description,
-    category: reportDB.category,
-    location: {
-      coordinates: reportDB.location?.coordinates || [],
-      address: reportDB.location?.address,
-      city: reportDB.location?.city,
-      country: reportDB.location?.country
-    },
-    priority: reportDB.priority,
-    trackingCode: reportDB.trackingCode,
-    status: reportDB.status,
-    metadata: {
-      ipAddress: reportDB.metadata?.ipAddress,
-      userAgent: reportDB.metadata?.userAgent,
-      submittedAt: reportDB.metadata?.createdAt, 
-      updatedAt: reportDB.metadata?.updatedAt,   
-      resolvedAt: reportDB.metadata?.resolvedAt,
-      estimatedResponseTime: reportDB.metadata?.estimatedResponseTime,
-      similarReportsNearby: reportDB.metadata?.similarReportsNearby 
-    },
-    userId: reportDB.userId, 
-    mediaUrls: reportDB.mediaUrls, 
- 
-  };
- }
+  private _mapReportResponse(reportDB: IReportDB): IReportResponse {
+    // Convertir ObjectId a string de forma segura(odio id)
+    const id = reportDB._id ? String(reportDB._id) : '';
+    
+    return {
+      id,
+      title: reportDB.title,
+      description: reportDB.description,
+      category: reportDB.category,
+      location: {
+        coordinates: reportDB.location?.coordinates || [0, 0],
+        address: reportDB.location?.address,
+        city: reportDB.location?.city || '',
+        country: reportDB.location?.country || ''
+      },
+      priority: reportDB.priority,
+      trackingCode: reportDB.trackingCode,
+      status: reportDB.status,
+      metadata: {
+        ipAddress: reportDB.metadata?.ipAddress,
+        userAgent: reportDB.metadata?.userAgent,
+        submittedAt: reportDB.metadata?.createdAt || new Date(),
+        updatedAt: reportDB.metadata?.updatedAt || new Date(),
+        resolvedAt: reportDB.metadata?.resolvedAt,
+        estimatedResponseTime: reportDB.metadata?.estimatedResponseTime || "72 horas",
+        similarReportsNearby: reportDB.metadata?.similarReportsNearby || 0
+      },
+      userId: reportDB.userId,
+      mediaUrls: reportDB.mediaUrls || []
+    };
+  }
 }

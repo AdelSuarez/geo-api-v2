@@ -1,13 +1,15 @@
 // src/models/geoReport.model.ts
 import { Schema, model, Document } from "mongoose";
 
-// 1. Interface - SIGUIENDO TU PATRÓN EXACTO
+
+
 export interface IReportDB extends Document {
   title: string;
   description: string;
   category: string;
   location: {
-    coordinates: [number, number]; // [longitud, latitud]
+    type: "Point"; 
+    coordinates: [number, number];
     address?: string;
     city: string;
     country: string;
@@ -28,7 +30,7 @@ export interface IReportDB extends Document {
   };
 }
 
-// 2. Schema - SIGUIENDO TU ESTRUCTURA EXACTA
+// 2. Schema 
 const ReportSchema = new Schema<IReportDB>({
   title: { 
     type: String, 
@@ -137,19 +139,14 @@ const ReportSchema = new Schema<IReportDB>({
   }
 });
 
-// 3. Índices - SIGUIENDO TU PATRÓN
-ReportSchema.index({ "location.coordinates": "2dsphere" }); // Para búsquedas por ubicación
-ReportSchema.index({ category: 1 }); // Para filtrar por categoría
-ReportSchema.index({ status: 1 }); // Para filtrar por estado
-ReportSchema.index({ "metadata.createdAt": -1 }); // Para ordenar por fecha
 
-// 4. Middleware para generar trackingCode automáticamente - CORREGIDO
+// 3. Middleware para generar trackingCode automáticamente 
 ReportSchema.pre("save", function() {
-  // No necesitas parámetro next en Mongoose 5+
+  
   const doc = this as IReportDB;
   
   if (!doc.trackingCode) {
-    // Generar código como REP-XXXXXX
+   
     const random = Math.random().toString(36).substring(2, 8).toUpperCase();
     doc.trackingCode = `REP-${random}`;
   }
@@ -158,5 +155,5 @@ ReportSchema.pre("save", function() {
   doc.metadata.updatedAt = new Date();
 });
 
-// 5. Exportar el modelo - SIGUIENDO TU CONVENCIÓN
+
 export const ReportModel = model<IReportDB>("Report", ReportSchema);

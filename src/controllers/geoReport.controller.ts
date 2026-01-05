@@ -37,8 +37,8 @@ export const createReport = async (req: Request, res: Response) => {
       title,
       description,
       category,
-      latitude,
-      longitude,
+      latitude: parseFloat(latitude),
+      longitude: parseFloat(longitude),
       city,
       country,
       address,
@@ -50,13 +50,13 @@ export const createReport = async (req: Request, res: Response) => {
       userAgent: req.headers["user-agent"]
     });
 
-    // 4. Responder 
-    console.log(` Controller: Reporte creado. ID: ${savedReport._id}`);
+    // 4. Responder - CORREGIDO: usar savedReport.id en vez de savedReport._id
+    console.log(` Controller: Reporte creado. ID: ${savedReport.id}`);
     return res.status(201).json({
       success: true,
       message: "Reporte creado exitosamente",
       data: {
-        id: savedReport._id,
+        id: savedReport.id, // Cambiado de _id a id
         title: savedReport.title,
         trackingCode: savedReport.trackingCode,
         status: savedReport.status
@@ -109,10 +109,10 @@ export const getReport = async (req: Request, res: Response) => {
 
     return res.status(200).json({
       success: true,
-      data: report
+      data: report // Ya es IReportResponse, no necesita conversión
     });
 
-  } catch (error: any) {
+  } catch (error) {
     console.error("Error al obtener reporte:", error);
     return res.status(500).json({ 
       success: false,
@@ -128,10 +128,10 @@ export const getHistoryReports = async (req: Request, res: Response) => {
     return res.status(200).json({
       success: true,
       count: reports.length,
-      data: reports
+      data: reports // Ya es array de IReportResponse
     });
 
-  } catch (error: any) {
+  } catch (error) {
     console.error("Error al obtener historial de reportes:", error);
     return res.status(500).json({ 
       success: false,
@@ -164,12 +164,12 @@ export const deleteReport = async (req: Request, res: Response) => {
       success: true,
       message: "Reporte eliminado correctamente",
       data: { 
-        id: deleted._id, 
+        id: deleted.id, // Cambiado de _id a id
         title: deleted.title 
       }
     });
 
-  } catch (error: any) {
+  } catch (error) {
     console.error("Error al eliminar reporte:", error);
     return res.status(500).json({ 
       success: false,
@@ -202,10 +202,10 @@ export const updateReport = async (req: Request, res: Response) => {
     return res.status(200).json({
       success: true,
       message: "Reporte actualizado correctamente",
-      data: updated
+      data: updated // Ya es IReportResponse
     });
 
-  } catch (error: any) {
+  } catch (error) {
     console.error("Error al actualizar reporte:", error);
     return res.status(500).json({ 
       success: false,

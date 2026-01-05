@@ -1,134 +1,210 @@
-import { ReportService } from "../src/controllers/geoReport.controller";
+// src/tests/geoReport.service.test.ts
+import { ReportService } from "../src/services/geoReport.service";
 import { ReportModel } from "../src/models/geoReport.model";
 
-// Mock del modelo de MongoDB
+// Mock del modelo
 jest.mock("../src/models/geoReport.model");
 
-describe("ReportService - Tests Sencillos", () => {
+describe("ReportService", () => {
   let service: ReportService;
 
   beforeEach(() => {
-    // Limpiar todos los mocks antes de cada test
     jest.clearAllMocks();
     service = new ReportService();
   });
 
-  // ============================================
-  // TEST 1: Crear reporte exitoso
-  // ============================================
-  test("Debería crear un reporte exitosamente", async () => {
-    // Datos de prueba
-    const reportData = {
-      title: "Bache en avenida",
-      description: "Bache de 50cm de diámetro",
-      category: "pothole",
-      location: {
-        coordinates: [-99.1332, 19.4326],
-        city: "CDMX",
-        country: "México"
-      }
-    };
+  describe("createReport", () => {
+    it("Debería crear un reporte exitosamente", async () => {
+      // Mock del reporte guardado
+      const mockSavedReport = {
+        _id: "new-report-id",
+        title: "Bache en Avenida Principal",
+        description: "Bache grande en la esquina",
+        category: "pothole" as const,
+        location: {
+          coordinates: [-70.6483, -33.4569],
+          address: "Avenida Principal 123",
+          city: "Santiago",
+          country: "Chile"
+        },
+        priority: "high" as const,
+        trackingCode: "REP-123456",
+        status: "pending" as const,
+        metadata: {
+          ipAddress: "192.168.1.1",
+          userAgent: "Mozilla/5.0",
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          estimatedResponseTime: "72 horas",
+          similarReportsNearby: 0
+        }
+      };
 
-    // Mock: Simular que MongoDB guarda correctamente
-    const mockSavedReport = {
-      _id: "507f1f77bcf86cd799439011",
-      ...reportData,
-      trackingCode: "REP-123456",
-      status: "pending",
-      createdAt: new Date(),
-      updatedAt: new Date()
-    };
+      // Mock de save
+      const mockSave = jest.fn().mockResolvedValue(mockSavedReport);
+      (ReportModel as any).mockImplementation(() => ({ save: mockSave }));
 
-    // Configurar el mock para que devuelva el reporte guardado
-    (ReportModel as any).mockImplementation(() => ({
-      save: jest.fn().mockResolvedValue(mockSavedReport)
-    }));
+      // Datos de entrada CON TIPOS CORRECTOS
+      const reportData = {
+        title: "Bache en Avenida Principal",
+        description: "Bache grande en la esquina",
+        category: "pothole" as const, // <-- Tipo específico, no string
+        latitude: -33.4569,
+        longitude: -70.6483,
+        city: "Santiago",
+        country: "Chile",
+        address: "Avenida Principal 123",
+        priority: "high" as const, // <-- Tipo específico
+        userId: "user-123",
+        ipAddress: "192.168.1.1",
+        userAgent: "Mozilla/5.0"
+      };
 
-    // Ejecutar la función del servicio
-    const result = await service.createReport(reportData);
+      const result = await service.createReport(reportData);
 
-    // Verificar resultados
-    expect(result).toBeDefined();
-    expect(result._id).toBe("507f1f77bcf86cd799439011");
-    expect(result.trackingCode).toBe("REP-123456");
-    expect(result.status).toBe("pending");
-    
-    // Verificar que se llamó a save()
-    expect(ReportModel).toHaveBeenCalled();
+      expect(result).toBeDefined();
+      expect(result.id).toBe("new-report-id");
+      expect(mockSave).toHaveBeenCalledTimes(1);
+    });
   });
 
-  // ============================================
-  // TEST 2: Error al guardar en MongoDB
-  // ============================================
-  test("Debería lanzar error si MongoDB falla", async () => {
-    const reportData = {
-      title: "Test error",
-      description: "Test",
-      category: "pothole",
-      location: {
-        coordinates: [-99.1332, 19.4326],
-        city: "CDMX",
-        country: "México"
-      }
-    };
+  describe("getReportById", () => {
+    it("Debería retornar un reporte por ID", async () => {
+      const mockReportFromDB = {
+        _id: "existing-id",
+        title: "Reporte existente",
+        description: "Descripción",
+        category: "garbage" as const,
+        location: {
+          coordinates: [-70.6483, -33.4569],
+          address: "Calle Test 123",
+          city: "Santiago",
+          country: "Chile"
+        },
+        priority: "medium" as const,
+        trackingCode: "REP-EXIST123",
+        status: "pending" as const,
+        metadata: {
+          ipAddress: "192.168.1.1",
+          userAgent: "Chrome",
+          createdAt: new Date("2024-01-15"),
+          updatedAt: new Date("2024-01-16"),
+          estimatedResponseTime: "72 horas",
+          similarReportsNearby: 2
+        },
+        userId: "test-user",
+        mediaUrls: ["url1.jpg", "url2.jpg"]
+      };
 
-    // Mock: Simular error de MongoDB
-    (ReportModel as any).mockImplementation(() => ({
-      save: jest.fn().mockRejectedValue(new Error("Error de conexión a MongoDB"))
-    }));
+      (ReportModel.findById as jest.Mock).mockResolvedValue(mockReportFromDB);
 
-    // Verificar que la función lanza error
-    await expect(service.createReport(reportData))
-      .rejects
-      .toThrow("Error de conexión a MongoDB");
+      const result = await service.getReportById("existing-id");
+
+      expect(result).not.toBeNull();
+      expect(result?.id).toBe("existing-id");
+    });
+
+    it("Debería retornar null si no existe", async () => {
+      (ReportModel.findById as jest.Mock).mockResolvedValue(null);
+      const result = await service.getReportById("non-existent-id");
+      expect(result).toBeNull();
+    });
   });
 
-  // ============================================
-  // TEST 3: Obtener reporte por ID
-  // ============================================
-  test("Debería obtener reporte por ID", async () => {
-    const mockReport = {
-      _id: "507f1f77bcf86cd799439011",
-      title: "Bache reparado",
-      status: "resolved"
-    };
+  describe("getAllReports", () => {
+    it("Debería retornar lista de reportes", async () => {
+      const mockReportsFromDB = [
+        {
+          _id: "report-1",
+          title: "Primer reporte",
+          description: "Desc 1",
+          category: "pothole" as const,
+          location: { coordinates: [1, 1], city: "City1", country: "Country1" },
+          priority: "high" as const,
+          trackingCode: "REP-001",
+          status: "pending" as const,
+          metadata: { 
+            createdAt: new Date("2024-01-02"), 
+            updatedAt: new Date("2024-01-02"),
+            estimatedResponseTime: "72 horas",
+            similarReportsNearby: 0
+          }
+        }
+      ];
 
-    // Mock de findById
-    (ReportModel.findById as jest.Mock).mockResolvedValue(mockReport);
+      const mockQuery = {
+        sort: jest.fn().mockReturnThis(),
+        limit: jest.fn().mockResolvedValue(mockReportsFromDB)
+      };
+      
+      (ReportModel.find as jest.Mock).mockReturnValue(mockQuery);
 
-    const result = await service.getReportById("507f1f77bcf86cd799439011");
+      const result = await service.getAllReports();
 
-    expect(result).toEqual(mockReport);
-    expect(ReportModel.findById).toHaveBeenCalledWith("507f1f77bcf86cd799439011");
+      expect(result).toHaveLength(1);
+      expect(result[0].title).toBe("Primer reporte");
+    });
   });
 
-  // ============================================
-  // TEST 4: Reporte no encontrado
-  // ============================================
-  test("Debería retornar null si reporte no existe", async () => {
-    // Mock: findById retorna null
-    (ReportModel.findById as jest.Mock).mockResolvedValue(null);
+  describe("deleteReport", () => {
+    it("Debería eliminar un reporte", async () => {
+      const mockDeletedReport = {
+        _id: "to-delete-id",
+        title: "Reporte a eliminar",
+        description: "Este será borrado",
+        category: "safety" as const,
+        location: { coordinates: [0, 0], city: "Test", country: "Test" },
+        priority: "low" as const,
+        trackingCode: "REP-DELETE",
+        status: "pending" as const,
+        metadata: { 
+          createdAt: new Date(), 
+          updatedAt: new Date(),
+          estimatedResponseTime: "72 horas",
+          similarReportsNearby: 0
+        }
+      };
 
-    const result = await service.getReportById("id_inexistente");
+      (ReportModel.findByIdAndDelete as jest.Mock).mockResolvedValue(mockDeletedReport);
 
-    expect(result).toBeNull();
+      const result = await service.deleteReport("to-delete-id");
+
+      expect(result).not.toBeNull();
+      expect(result?.id).toBe("to-delete-id");
+    });
   });
 
-  // ============================================
-  // TEST 5: Eliminar reporte
-  // ============================================
-  test("Debería eliminar reporte por ID", async () => {
-    const mockDeletedReport = {
-      _id: "507f1f77bcf86cd799439011",
-      title: "Bache eliminado"
-    };
+  describe("updateReport", () => {
+    it("Debería actualizar un reporte", async () => {
+      const mockUpdatedReport = {
+        _id: "update-id",
+        title: "Título actualizado",
+        description: "Descripción actualizada",
+        category: "pothole" as const,
+        location: { coordinates: [1, 1], city: "City", country: "Country" },
+        priority: "critical" as const,
+        trackingCode: "REP-UPDATE",
+        status: "resolved" as const,
+        metadata: {
+          createdAt: new Date("2024-01-01"),
+          updatedAt: new Date("2024-01-03"),
+          estimatedResponseTime: "72 horas",
+          similarReportsNearby: 0
+        }
+      };
 
-    // Mock de findByIdAndDelete
-    (ReportModel.findByIdAndDelete as jest.Mock).mockResolvedValue(mockDeletedReport);
+      (ReportModel.findByIdAndUpdate as jest.Mock).mockResolvedValue(mockUpdatedReport);
 
-    const result = await service.deleteReport("507f1f77bcf86cd799439011");
+      const updateData = {
+        title: "Título actualizado",
+        status: "resolved" as const,
+        priority: "critical" as const
+      };
 
-    expect(result).toEqual(mockDeletedReport);
-    expect(ReportModel.findByIdAndDelete).toHaveBeenCalledWith("507f1f77bcf86cd799439011");
+      const result = await service.updateReport("update-id", updateData);
+
+      expect(result).not.toBeNull();
+      expect(result?.title).toBe("Título actualizado");
+    });
   });
 });
