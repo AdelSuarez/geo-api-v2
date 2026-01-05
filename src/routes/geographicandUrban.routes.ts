@@ -13,8 +13,7 @@ import {
 } from "../controllers/worldbank.controller";
 import {
   createReport,
-  getReport,
-  getNearbyReports,
+  getReport,  
   getHistoryReports,
   deleteReport,
   updateReport
@@ -486,60 +485,7 @@ router.post("/report", createReport);
  */
 router.get("/report/:id", getReport);
 
-/**
- * @swagger
- * /geo/reports/nearby:
- *   get:
- *     summary: Obtener reportes cercanos a una ubicación
- *     tags:
- *       - Geografico y urbano
- *     parameters:
- *       - in: query
- *         name: latitude
- *         required: true
- *         description: Latitud del punto central
- *         schema:
- *           type: number
- *       - in: query
- *         name: longitude
- *         required: true
- *         description: Longitud del punto central
- *         schema:
- *           type: number
- *       - in: query
- *         name: radius
- *         description: Radio de búsqueda en metros (por defecto 1000)
- *         schema:
- *           type: number
- *           default: 1000
- *       - in: query
- *         name: category
- *         description: Filtrar por categoría (opcional)
- *         schema:
- *           type: string
- *           enum: [pothole, street_light, garbage, water_leak, traffic_signal, public_transport, parks, safety, other]
- *     responses:
- *       200:
- *         description: Lista de reportes cercanos
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                   example: true
- *                 count:
- *                   type: number
- *                   example: 5
- *                 data:
- *                   type: array
- *                   items:
- *                     type: object
- *       400:
- *         description: Faltan coordenadas
- */
-router.get("/reports/nearby", getNearbyReports);
+
 
 /**
  * @swagger
@@ -575,12 +521,43 @@ router.get("/history_reports", getHistoryReports);
  *           schema:
  *             type: object
  *             properties:
- *               status:
+ *               title:
  *                 type: string
- *                 example: "in_progress"
+ *                 example: "Bache profundo en avenida principal"
+ *               description:
+ *                 type: string
+ *                 example: "Bache de aproximadamente 40cm de diámetro en el carril central"
+ *               category:
+ *                 type: string
+ *                 enum: [pothole, street_light, garbage, water_leak, traffic_signal, public_transport, parks, safety, other]
+ *                 example: "pothole"
+ *               latitude:
+ *                 type: number
+ *                 example: 19.4326
+ *               longitude:
+ *                 type: number
+ *                 example: -99.1332
+ *               city:
+ *                 type: string
+ *                 example: "Ciudad de México"
+ *               country:
+ *                 type: string
+ *                 example: "México"
+ *               address:
+ *                 type: string
+ *                 example: "Avenida Paseo de la Reforma 123"
  *               priority:
  *                 type: string
+ *                 enum: [low, medium, high, critical]
  *                 example: "high"
+ *               mediaUrls:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                 example: ["https://ejemplo.com/foto1.jpg"]
+ *               userId:
+ *                 type: string
+ *                 example: "user_12345"
  *     responses:
  *       200:
  *         description: Reporte actualizado

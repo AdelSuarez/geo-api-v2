@@ -1,4 +1,3 @@
-// src/controllers/geoReport.controller.ts
 import { Request, Response } from "express";
 import { ReportService } from "../services/geoReport.service";
 
@@ -6,6 +5,9 @@ const service = new ReportService();
 
 export const createReport = async (req: Request, res: Response) => {
   try {
+    console.log(" Controller: Recibiendo solicitud POST /geo/report");
+
+    // 1. Extraer datos del request 
     const {
       title,
       description,
@@ -20,43 +22,36 @@ export const createReport = async (req: Request, res: Response) => {
       userId
     } = req.body;
 
-    console.log("📥 Datos recibidos:", req.body); // <-- Añade esto
-
-    // Validación básica
+    // 2. Validación básica de presencia 
     if (!title || !description || !category || !latitude || !longitude || !city || !country) {
+      console.log(" Controller: Faltan campos requeridos");
       return res.status(400).json({ 
         success: false,
         message: "Faltan campos requeridos" 
       });
     }
 
-    const trackingCode = `REP-${Date.now()}-${Math.random().toString(36).substr(2, 6).toUpperCase()}`;
-
-    // Preparar datos
-    const reportData = {
-      title: title.trim(),
-      description: description.trim(),
+    // 3. Pasar datos CRUDOS al service 
+    console.log(" Controller: Pasando datos al service...");
+    const savedReport = await service.createReport({
+      title,
+      description,
       category,
-      location: {
-        coordinates: [parseFloat(longitude), parseFloat(latitude)],
-        address: address ? address.trim() : undefined,
-        city: city.trim(),
-        country: country.trim()
-      },
-      priority: priority || "medium",
-      userId: userId ? userId.trim() : undefined,
-      mediaUrls: mediaUrls || [],
-      metadata: {
-        ipAddress: req.ip || req.socket.remoteAddress,
-        userAgent: req.headers["user-agent"] || "Desconocido"
-      },
-      trackingCode: trackingCode
-    };
+      latitude,
+      longitude,
+      city,
+      country,
+      address,
+      priority,
+      mediaUrls,
+      userId,
+      // Metadata que solo el controller puede obtener
+      ipAddress: req.ip || req.socket.remoteAddress,
+      userAgent: req.headers["user-agent"]
+    });
 
-    console.log("📤 Datos procesados:", reportData); // <-- Añade esto
-
-    const savedReport = await service.createReport(reportData);
-
+    // 4. Responder 
+    console.log(` Controller: Reporte creado. ID: ${savedReport._id}`);
     return res.status(201).json({
       success: true,
       message: "Reporte creado exitosamente",
@@ -69,10 +64,9 @@ export const createReport = async (req: Request, res: Response) => {
     });
 
   } catch (error: any) {
-    console.error("❌ Error al crear reporte:", error);
-    console.error("📋 Error completo:", JSON.stringify(error, null, 2)); // <-- Añade esto
+    console.error(" Controller: Error en createReport:", error);
 
-    // Manejo de errores
+    // 5. Manejo de errores HTTP 
     if (error.name === "ValidationError") {
       return res.status(400).json({
         success: false,
@@ -88,7 +82,7 @@ export const createReport = async (req: Request, res: Response) => {
     return res.status(500).json({ 
       success: false,
       message: "Error interno del servidor",
-      error: error.message // <-- Incluye el mensaje completo
+      error: error.message 
     });
   }
 };
@@ -118,41 +112,8 @@ export const getReport = async (req: Request, res: Response) => {
       data: report
     });
 
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error al obtener reporte:", error);
-    return res.status(500).json({ 
-      success: false,
-      message: "Error interno del servidor" 
-    });
-  }
-};
-
-export const getNearbyReports = async (req: Request, res: Response) => {
-  try {
-    const { latitude, longitude, radius = 1000, category } = req.query;
-
-    if (!latitude || !longitude) {
-      return res.status(400).json({ 
-        success: false,
-        message: "Se requieren coordenadas (latitude, longitude)" 
-      });
-    }
-
-    const reports = await service.getNearbyReports(
-      parseFloat(latitude as string),
-      parseFloat(longitude as string),
-      parseInt(radius as string),
-      category as string
-    );
-
-    return res.status(200).json({
-      success: true,
-      count: reports.length,
-      data: reports
-    });
-
-  } catch (error) {
-    console.error("Error al obtener reportes cercanos:", error);
     return res.status(500).json({ 
       success: false,
       message: "Error interno del servidor" 
@@ -170,7 +131,7 @@ export const getHistoryReports = async (req: Request, res: Response) => {
       data: reports
     });
 
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error al obtener historial de reportes:", error);
     return res.status(500).json({ 
       success: false,
@@ -208,7 +169,7 @@ export const deleteReport = async (req: Request, res: Response) => {
       }
     });
 
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error al eliminar reporte:", error);
     return res.status(500).json({ 
       success: false,
@@ -244,7 +205,7 @@ export const updateReport = async (req: Request, res: Response) => {
       data: updated
     });
 
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error al actualizar reporte:", error);
     return res.status(500).json({ 
       success: false,
