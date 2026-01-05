@@ -31,7 +31,7 @@ export const createReport = async (req: Request, res: Response) => {
       });
     }
 
-    // 3. Pasar datos CRUDOS al service 
+    // 3. Pasar datos al service 
     console.log(" Controller: Pasando datos al service...");
     const savedReport = await service.createReport({
       title,
@@ -50,13 +50,13 @@ export const createReport = async (req: Request, res: Response) => {
       userAgent: req.headers["user-agent"]
     });
 
-    // 4. Responder - CORREGIDO: usar savedReport.id en vez de savedReport._id
+    // 4. Responder 
     console.log(` Controller: Reporte creado. ID: ${savedReport.id}`);
     return res.status(201).json({
       success: true,
       message: "Reporte creado exitosamente",
       data: {
-        id: savedReport.id, // Cambiado de _id a id
+        id: savedReport.id, 
         title: savedReport.title,
         trackingCode: savedReport.trackingCode,
         status: savedReport.status
@@ -109,7 +109,7 @@ export const getReport = async (req: Request, res: Response) => {
 
     return res.status(200).json({
       success: true,
-      data: report // Ya es IReportResponse, no necesita conversión
+      data: report 
     });
 
   } catch (error) {
@@ -128,7 +128,7 @@ export const getHistoryReports = async (req: Request, res: Response) => {
     return res.status(200).json({
       success: true,
       count: reports.length,
-      data: reports // Ya es array de IReportResponse
+      data: reports 
     });
 
   } catch (error) {
@@ -164,7 +164,7 @@ export const deleteReport = async (req: Request, res: Response) => {
       success: true,
       message: "Reporte eliminado correctamente",
       data: { 
-        id: deleted.id, // Cambiado de _id a id
+        id: deleted.id,
         title: deleted.title 
       }
     });
@@ -202,7 +202,7 @@ export const updateReport = async (req: Request, res: Response) => {
     return res.status(200).json({
       success: true,
       message: "Reporte actualizado correctamente",
-      data: updated // Ya es IReportResponse
+      data: updated 
     });
 
   } catch (error) {
